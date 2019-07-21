@@ -82,5 +82,6 @@
     <string name="check_hour">Registrar hora</string>
     <string name="register_finger">Registrar huella</string>
     <string name="create">Crear</string>
+    <string name="registry_type">Tipo de registro</string>
 
 </resources>

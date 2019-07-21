@@ -157,7 +157,6 @@ public class UsbReaderTestActivity extends Activity {
 					if(msg.arg1==1){
 						tvStatus.setText("Generate Template OK");
 						fpModule.GetTemplateByGen(matdata, matsize);
-
 						int mret=fpModule.MatchTemplate(refdata, matdata);
 						tvStatus.setText(String.format("Match Return:%d",mret));
 					}else{

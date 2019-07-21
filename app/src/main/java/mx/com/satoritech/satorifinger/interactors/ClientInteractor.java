@@ -1,12 +1,12 @@
 package mx.com.satoritech.satorifinger.interactors;
 
-import com.facebook.stetho.Stetho;
-
 import java.util.ArrayList;
 
 import mx.com.satoritech.satorifinger.api.APIFingerprint;
 import mx.com.satoritech.satorifinger.models.Fingerprint;
 import mx.com.satoritech.satorifinger.models.GenericResponse;
+import mx.com.satoritech.satorifinger.models.Registry;
+import mx.com.satoritech.satorifinger.models.RegistryType;
 import mx.com.satoritech.satorifinger.models.User;
 import mx.com.satoritech.satorifinger.utils.callbacks.CBGeneric;
 
@@ -41,5 +41,35 @@ public class ClientInteractor {
                 cb.onResult(generic);
             }
         });
+    }
+
+    public void getFingersprintEmployee(long userId, CBGeneric<ArrayList<Fingerprint>> cb) {
+        api.getEmployeeFingersPrint(userId, (success, fingerprintArrayList) -> {
+            if (!success) {
+                cb.onResult(null);
+            } else {
+                cb.onResult(fingerprintArrayList);
+            }
+        });
+    }
+
+    public void getRegistryTypes(CBGeneric<ArrayList<RegistryType>> cb) {
+        api.getRegistryTypes((success, registryTypes) -> {
+            if (!success) {
+                cb.onResult(null);
+            } else {
+                cb.onResult(registryTypes);
+            }
+        });
+    }
+
+    public void createRegistry(Registry registry, CBGeneric<GenericResponse> cb) {
+        api.check(registry, ((success, result) -> {
+            if (!success) {
+                cb.onResult(null);
+            } else {
+                cb.onResult(result);
+            }
+        }));
     }
 }

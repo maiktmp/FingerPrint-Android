@@ -146,7 +146,7 @@ public class ActCreateFinger extends AppCompatActivity {
             value = Base64.getEncoder().encodeToString(refdata);
 //            byte[] decode = Base64.getDecoder().decode(value.getBytes());
             fingerprint.setValue(value);
-            fingerprint.setFkIdEmployee(4);
+            fingerprint.setFkIdEmployee(userId);
             clientInteractor.createFingerPrint(fingerprint, genericResponse -> {
                 if (genericResponse.isSuccess()) {
                     Dialogs.alert(this, "Huella registrada satisfactoriamente", dialog -> finish());

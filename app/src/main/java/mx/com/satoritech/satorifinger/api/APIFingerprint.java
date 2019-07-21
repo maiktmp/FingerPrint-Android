@@ -16,6 +16,8 @@ import mx.com.satoritech.satorifinger.api.serializers.DateDeserializaer;
 import mx.com.satoritech.satorifinger.api.serializers.DateSerializer;
 import mx.com.satoritech.satorifinger.models.Fingerprint;
 import mx.com.satoritech.satorifinger.models.GenericResponse;
+import mx.com.satoritech.satorifinger.models.Registry;
+import mx.com.satoritech.satorifinger.models.RegistryType;
 import mx.com.satoritech.satorifinger.models.User;
 import mx.com.satoritech.satorifinger.utils.callbacks.CBGeneric;
 import mx.com.satoritech.satorifinger.utils.callbacks.CBSuccess;
@@ -83,6 +85,30 @@ public class APIFingerprint {
         doRequest(
                 "Create fingerprint employee",
                 fingerService.fingerPrintCreate(fingerprint),
+                cb
+        );
+    }
+
+    public void getEmployeeFingersPrint(long userId, CBSuccess<ArrayList<Fingerprint>> cb) {
+        doRequest(
+                "Get fingersprint employee",
+                fingerService.getEmployeeFingerPrint(userId),
+                cb
+        );
+    }
+
+    public void getRegistryTypes(CBSuccess<ArrayList<RegistryType>> cb) {
+        doRequest(
+                "Get registry types",
+                fingerService.getRegistryTypes(),
+                cb
+        );
+    }
+
+    public void check(Registry registry, CBSuccess<GenericResponse> cb) {
+        doRequest(
+                "Check",
+                fingerService.check(registry),
                 cb
         );
     }

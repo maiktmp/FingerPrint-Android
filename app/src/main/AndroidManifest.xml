@@ -26,7 +26,8 @@
         <activity android:name=".ui.finger.ActCreateFinger" />
 
         <activity android:name=".ui.users.ActUsers">
-            <intent-filter>
+        <!--<activity android:name=".UsbReaderTestActivity" >-->
+        <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
