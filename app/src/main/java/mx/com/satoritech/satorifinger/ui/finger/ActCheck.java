@@ -10,12 +10,17 @@ import android.os.Message;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.ImageViewCompat;
 import androidx.databinding.DataBindingUtil;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.fpreader.fpdevice.Constants;
 import com.fpreader.fpdevice.UsbReader;
@@ -39,9 +44,9 @@ public class ActCheck extends AppCompatActivity {
     private ClientInteractor clientInteractor;
     private ActCheckBinding vBind;
     private Context mContext = this;
-
     UsbReader fingerPrint;
     boolean isWorking = false;
+    boolean fingerReadingOk = false;
 
     byte refdata[] = new byte[512];
     int refsize[] = new int[1];
@@ -56,11 +61,12 @@ public class ActCheck extends AppCompatActivity {
         vBind = DataBindingUtil.setContentView(this, R.layout.act_check);
         showProgressBar();
         setUpToolbar();
-
+        if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.O) {
+            Dialogs.alert(this, R.string.message_api, (dialog, s) -> finish());
+        }
         clientInteractor.getRegistryTypes(this::setUpRegistryTypes);
         clientInteractor.getFingersprintEmployee(userId, fingersList -> {
             hideProgressBar();
-
             setUpFingerPrint(fingersList);
         });
     }
@@ -72,32 +78,17 @@ public class ActCheck extends AppCompatActivity {
     }
 
     private void setUpRegistryTypes(ArrayList<RegistryType> registryTypes) {
-        String[] registryTypesArray = new String[registryTypes.size() + 1];
-
-        registryTypesArray[0] = "Seleccione un tipo de registro";
-
-        for (int i = 0; i < registryTypes.size(); i++) {
-            registryTypesArray[i + 1] = registryTypes.get(i).getName();
-        }
-
-        ArrayAdapter<String> adapter =
-                new ArrayAdapter<>(
-                        this,
-                        R.layout.dropdown_registry_type,
-                        registryTypesArray);
-
-        vBind.spRegistryTypes.setAdapter(adapter);
-        vBind.spRegistryTypes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                registryTypeId = id;
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
+        RecyclerView.LayoutManager layoutManager = new GridLayoutManager(mContext, 3);
+        vBind.rvRegistryTypes.setLayoutManager(layoutManager);
+        vBind.rvRegistryTypes.setItemAnimator(new DefaultItemAnimator());
+        Adapter adapter = new Adapter(
+                registryTypes,
+                registryType -> {
+                    this.registryTypeId = registryType.getId();
+                    if (fingerReadingOk) createRegistry();
+                },
+                this);
+        vBind.rvRegistryTypes.setAdapter(adapter);
     }
 
     public void readFinger() {
@@ -148,30 +139,28 @@ public class ActCheck extends AppCompatActivity {
                                 }
                             }
                             if (!fingerSuccess) {
+                                isWorking = false;
+                                vBind.tvMessages.setText("Huella no reconocida");
                                 ImageViewCompat.setImageTintList(
                                         vBind.ivFinger,
                                         ColorStateList.valueOf(getResources().getColor(R.color.red)));
+                                readFinger();
                             } else {
                                 vBind.tvMessages.setText("Huella reconocida");
                                 ImageViewCompat.setImageTintList(
                                         vBind.ivFinger,
                                         ColorStateList.valueOf(getResources().getColor(R.color.green)));
-                                Registry registry = new Registry();
-                                registry.setFkIdEmployee(userId);
-                                registry.setFkIdRegistryType(2);
-                                clientInteractor.createRegistry(registry, genericResponse -> {
-                                    if (genericResponse == null) {
-                                        Dialogs.alert(mContext,
-                                                "Ocurrio un error al crear el registro",
-                                                dialog -> readFinger());
-                                    } else {
-                                        Dialogs.alert(mContext,
-                                                "Registro creado satisfactoriamente",
-                                                dialog -> finish());
-                                    }
-                                });
+                                fingerReadingOk = true;
+                                if (registryTypeId == 0) {
+                                    Toast.makeText(mContext,
+                                            "Seleccione un tipo de registro",
+                                            Toast.LENGTH_SHORT).show();
+                                    break;
+                                }
+                                createRegistry();
                             }
                         } else {
+                            vBind.tvMessages.setText("Huella no reconocida");
                             ImageViewCompat.setImageTintList(
                                     vBind.ivFinger,
                                     ColorStateList.valueOf(getResources().getColor(R.color.red)));
@@ -206,6 +195,23 @@ public class ActCheck extends AppCompatActivity {
             vBind.tvMessages.setText("Esperando lector");
         }
 
+    }
+
+    private void createRegistry() {
+        Registry registry = new Registry();
+        registry.setFkIdEmployee(userId);
+        registry.setFkIdRegistryType(registryTypeId);
+        clientInteractor.createRegistry(registry, genericResponse -> {
+            if (genericResponse == null) {
+                Dialogs.alert(mContext,
+                        "Ocurrio un error al crear el registro",
+                        dialog -> readFinger());
+            } else {
+                Dialogs.alert(mContext,
+                        "Registro creado satisfactoriamente",
+                        dialog -> finish());
+            }
+        });
     }
 
     private void setUpToolbar() {
